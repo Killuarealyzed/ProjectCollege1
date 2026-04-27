@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic System | Адаптивное управление трафиком</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-bg: #0a0a0a;
+            --secondary-bg: #111111;
+            --card-bg: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent: #10b981;
+            --accent-secondary: #06b6d4;
+            --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-secondary); }
+
+   
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 18px 50px;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links { display: flex; gap: 35px; list-style: none; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 5px 0;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px;
+            background: var(--accent-gradient); transition: width 0.3s ease;
+        }
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-links a:hover::after { width: 100%; }
+
+       
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(16, 185, 129, 0.08), transparent 40%),
+                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.08), transparent 40%);
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            line-height: 1.15;
+            animation: fadeInUp 1s ease 0.2s backwards;
+        }
+        .hero h1 span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin-bottom: 40px;
+            font-weight: 300;
+            animation: fadeInUp 1s ease 0.4s backwards;
+        }
+
+        .hero-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 45px;
+            animation: fadeInUp 1s ease 0.6s backwards;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 10px 18px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .info-label { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
+
+        .cta-buttons { display: flex; gap: 16px; animation: fadeInUp 1s ease 0.8s backwards; }
+        .btn {
+            padding: 14px 36px; border-radius: 28px; font-weight: 600; text-decoration: none;
+            transition: all 0.3s ease; display: inline-block; font-size: 0.95rem; cursor: pointer; border: none;
+        }
+        .btn-primary {
+            background: var(--accent-gradient); color: #0a0a0a; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(16, 185, 129, 0.5); }
+        .btn-secondary { background: transparent; color: var(--text-primary); border: 2px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); background: rgba(16, 185, 129, 0.1); }
+
+       
+        section { padding: 100px 50px; position: relative; }
+        .section-header { text-align: center; margin-bottom: 70px; }
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 700;
+            margin-bottom: 18px;
+            letter-spacing: -0.5px;
+        }
+        .section-subtitle { font-size: 1.05rem; color: var(--text-secondary); max-width: 580px; margin: 0 auto; line-height: 1.7; }
+
+        
+        .model-section { background: var(--secondary-bg); padding: 80px 20px; }
+        .model-container {
+            max-width: 1400px; margin: 0 auto; background: var(--card-bg); border-radius: 24px;
+            overflow: hidden; border: 1px solid var(--border); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+        .model-wrapper { width: 100%; height: 65vh; min-height: 450px; background: linear-gradient(180deg, #151515, #1a1a1a); }
+        model-viewer { width: 100%; height: 100%; --poster-color: #1a1a1a; }
+        .model-info {
+            padding: 35px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border);
+        }
+        .model-feature { display: flex; align-items: flex-start; gap: 14px; }
+        .model-feature-icon {
+            width: 48px; height: 48px; background: var(--accent-gradient); border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+        }
+        .model-feature-text h4 { font-size: 1.05rem; margin-bottom: 4px; font-weight: 600; }
+        .model-feature-text p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+
+      
+        .how-it-works { background: var(--primary-bg); }
+        .system-architecture { max-width: 1100px; margin: 0 auto; display: grid; gap: 25px; }
+        .architecture-card {
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 35px;
+            display: grid; grid-template-columns: auto 1fr; gap: 25px; align-items: center;
+            transition: all 0.4s ease; opacity: 0; transform: translateX(-40px);
+        }
+        .architecture-card.visible { opacity: 1; transform: translateX(0); }
+        .architecture-card:hover { border-color: var(--accent); transform: translateX(8px); box-shadow: 0 15px 35px rgba(16, 185, 129, 0.12); }
+        .arch-number {
+            font-size: 3.5rem; font-weight: 800; background: var(--accent-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; min-width: 70px;
+        }
+        .arch-content h3 { font-size: 1.4rem; margin-bottom: 12px; font-weight: 600; }
+        .arch-content p { color: var(--text-secondary); margin-bottom: 12px; font-size: 0.95rem; }
+        .arch-tech {
+            display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px;
+            background: rgba(16, 185, 129, 0.12); border-radius: 8px; font-size: 0.82rem; color: var(--accent); font-weight: 500;
+        }
+
+       
+        .stats-section { background: linear-gradient(180deg, var(--secondary-bg), var(--primary-bg)); }
+        .stats-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 35px 28px;
+            text-align: center; transition: all 0.4s ease; opacity: 0; transform: translateY(25px); position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--accent-gradient); transform: scaleX(0); transition: transform 0.4s ease;
+        }
+        .stat-card.visible { opacity: 1; transform: translateY(0); }
+        .stat-card:hover::before { transform: scaleX(1); }
+        .stat-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15); }
+        .stat-icon { font-size: 2.8rem; margin-bottom: 18px; }
+        .stat-value {
+            font-size: 2.8rem; font-weight: 800; background: var(--accent-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; line-height: 1;
+        }
+        .stat-label { font-size: 1rem; color: var(--text-primary); margin-bottom: 10px; font-weight: 500; }
+        .stat-desc { font-size: 0.88rem; color: var(--text-secondary); opacity: 0.9; }
+
+      
+        .benefits-section { background: var(--primary-bg); }
+        .fuel-grid { max-width: 900px; margin: 0 auto; display: grid; gap: 20px; }
+        .fuel-card {
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+            transition: all 0.3s ease; opacity: 0; transform: translateX(40px);
+        }
+        .fuel-card.visible { opacity: 1; transform: translateX(0); }
+        .fuel-card:hover { border-color: var(--accent); }
+        .fuel-header {
+            padding: 25px 30px; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; background: rgba(255,255,255,0.02);
+        }
+        .fuel-info h4 { font-size: 1.25rem; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+        .fuel-info p { color: var(--text-secondary); font-size: 0.9rem; }
+        .fuel-price { font-size: 1.6rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+        .fuel-toggle {
+            width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease; flex-shrink: 0;
+        }
+        .fuel-card.active .fuel-toggle { transform: rotate(180deg); background: var(--accent); }
+        .fuel-details {
+            max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; background: rgba(0,0,0,0.2);
+        }
+        .fuel-card.active .fuel-details { max-height: 500px; padding: 20px 30px 30px; }
+        .calc-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .calc-table td { padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .calc-table td:last-child { text-align: right; font-weight: 500; color: var(--accent); }
+        .calc-table tr:last-child td { border-bottom: none; font-weight: 600; font-size: 1.05rem; color: var(--text-primary); padding-top: 15px; }
+        .calc-note {
+            margin-top: 15px; padding: 12px 16px; background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; color: var(--text-secondary);
+        }
+
+       
+        .implementation { background: var(--secondary-bg); }
+        .implementation-content {
+            max-width: 900px; margin: 0 auto; background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 22px; padding: 50px;
+        }
+        .implementation-content > p { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.8; margin-bottom: 30px; }
+        .implementation-list { list-style: none; margin-top: 25px; }
+        .implementation-list li {
+            padding: 18px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center;
+            gap: 16px; opacity: 0; transform: translateY(15px); transition: all 0.4s ease;
+        }
+        .implementation-list li.visible { opacity: 1; transform: translateY(0); }
+        .implementation-list li::before {
+            content: '✓'; color: var(--accent); font-size: 1.3rem; font-weight: 700; width: 28px; height: 28px;
+            background: rgba(16, 185, 129, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .implementation-list li:last-child { border-bottom: none; }
+        .info-box {
+            margin-top: 35px; padding: 22px 25px; background: rgba(6, 182, 212, 0.1);
+            border-left: 4px solid var(--accent-secondary); border-radius: 0 10px 10px 0;
+        }
+        .info-box p { color: var(--text-secondary); font-size: 0.93rem; line-height: 1.7; }
+        .info-box strong { color: var(--accent-secondary); }
+
+       
+        footer { background: var(--primary-bg); border-top: 1px solid var(--border); padding: 55px 50px 35px; text-align: center; }
+        .footer-content { max-width: 750px; margin: 0 auto; }
+        .footer-logo {
+            font-size: 1.8rem; font-weight: 800; background: var(--accent-gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 18px;
+        }
+        .footer-info { color: var(--text-secondary); margin-bottom: 28px; line-height: 1.9; font-size: 0.95rem; }
+        .footer-contact {
+            display: inline-flex; align-items: center; gap: 8px; padding: 11px 28px;
+            background: rgba(16, 185, 129, 0.12); border: 1px solid var(--accent); border-radius: 25px;
+            color: var(--accent); text-decoration: none; transition: all 0.3s ease; margin-top: 18px; font-weight: 500;
+        }
+        .footer-contact:hover { background: var(--accent); color: #0a0a0a; }
+        .footer-bottom { margin-top: 35px; padding-top: 28px; border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 0.88rem; }
+
+      
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav { padding: 14px 20px; }
+            .nav-links { display: none; }
+            section { padding: 70px 20px; }
+            .hero { padding: 100px 20px 50px; }
+            .hero-info { flex-direction: column; gap: 12px; }
+            .cta-buttons { flex-direction: column; width: 100%; max-width: 300px; }
+            .btn { width: 100%; text-align: center; }
+            .architecture-card { grid-template-columns: 1fr; text-align: center; }
+            .arch-number { margin: 0 auto; }
+            .implementation-content { padding: 35px 25px; }
+            .fuel-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .fuel-price { align-self: flex-end; }
+        }
+
+       
+        .loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--primary-bg); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.5s ease;
+        }
+        .loader.hidden { opacity: 0; pointer-events: none; }
+        .loader-circle {
+            width: 50px; height: 50px; border: 3px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="loader"><div class="loader-circle"></div></div>
+
+    <nav>
+        <div class="logo">SmartTraffic</div>
+        <ul class="nav-links">
+            <li><a href="#about" data-scroll>О системе</a></li>
+            <li><a href="#model" data-scroll>3D Модель</a></li>
+            <li><a href="#how-it-works" data-scroll>Принцип работы</a></li>
+            <li><a href="#stats" data-scroll>Эффект</a></li>
+            <li><a href="#benefits" data-scroll>Экономия</a></li>
+            <li><a href="#prototype" data-scroll>Прототип</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero" id="about">
+        <h1>Адаптивное управление трафиком с <span>элементами машинного зрения</span></h1>
+        <p class="hero-subtitle">
+            Интеллектуальная система на основе сенсорных плит и компьютерного зрения 
+            для снижения заторов, экономии топлива и защиты окружающей среды
+        </p>
+        
+        <div class="hero-info">
+            <div class="info-item"><div class="info-label">Автор</div><div class="info-value">Белько Е.А.</div></div>
+            <div class="info-item"><div class="info-label">Группа</div><div class="info-value">55-15</div></div>
+            <div class="info-item"><div class="info-label">Специальность</div><div class="info-value">08.02.09</div></div>
+            <div class="info-item"><div class="info-label">Руководитель</div><div class="info-value">Герасимова Е.А.</div></div>
+        </div>
+
+        <div class="cta-buttons">
+            <a href="#model" class="btn btn-primary" data-scroll>Смотреть 3D модель</a>
+            <a href="#how-it-works" class="btn btn-secondary" data-scroll>Как это работает</a>
+        </div>
+    </section>
+
+    <section class="model-section" id="model">
+        <div class="section-header">
+            <h2 class="section-title">3D Модель перекрёстка</h2>
+            <p class="section-subtitle">Интерактивная визуализация макета пересечения Киевской трассы и местной дороги</p>
+        </div>
+
+        <div class="model-container">
+            <div class="model-wrapper">
+                <model-viewer 
+                    src="traffic-light.glb" 
+                    alt="3D модель умного светофора"
+                    auto-rotate camera-controls shadow-intensity="1"
+                    environment-image="neutral" exposure="1" tone-mapping="neutral">
+                </model-viewer>
+            </div>
+            
+            <div class="model-info">
+                <div class="model-feature"><div class="model-feature-icon">🚦</div><div class="model-feature-text"><h4>Адаптивные светофоры</h4><p>Динамическое изменение фаз в зависимости от трафика</p></div></div>
+                <div class="model-feature"><div class="model-feature-icon">📷</div><div class="model-feature-text"><h4>Компьютерное зрение</h4><p>Анализ потока на главной дороге в радиусе 500м</p></div></div>
+                <div class="model-feature"><div class="model-feature-icon">⚡</div><div class="model-feature-text"><h4>Сенсорные плиты</h4><p>Детекция транспорта на второстепенной дороге</p></div></div>
+                <div class="model-feature"><div class="model-feature-icon">🧠</div><div class="model-feature-text"><h4>Интеллектуальный контроллер</h4><p>Принятие решений за 10-15 секунд</p></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header">
+            <h2 class="section-title">Принцип работы системы</h2>
+            <p class="section-subtitle">Два независимых канала обнаружения транспорта для максимальной эффективности</p>
+        </div>
+
+        <div class="system-architecture">
+            <div class="architecture-card">
+                <div class="arch-number">01</div>
+                <div class="arch-content">
+                    <h3>Сенсорные плиты на второстепенной дороге</h3>
+                    <p>На подъезде к перекрёстку устанавливаются пружинные сенсорные плиты. При наезде автомобиля происходит механическое сжатие, фиксируемое контактным датчиком.</p>
+                    <span class="arch-tech">⚙️ Механические датчики давления</span>
+                </div>
+            </div>
+            <div class="architecture-card">
+                <div class="arch-number">02</div>
+                <div class="arch-content">
+                    <h3>Система компьютерного зрения на главной дороге</h3>
+                    <p>Направленная камера постоянно сканирует участок главной дороги в радиусе до 500 метров. Алгоритм обработки изображения определяет наличие или отсутствие транспорта.</p>
+                    <span class="arch-tech">🤖 AI-анализ видеопотока</span>
+                </div>
+            </div>
+            <div class="architecture-card">
+                <div class="arch-number">03</div>
+                <div class="arch-content">
+                    <h3>Логика принятия решений</h3>
+                    <p><strong>ЕСЛИ</strong> на второстепенной дороге обнаружен автомобиль <strong>И</strong> на главной дороге отсутствует движение <strong>ТО</strong> включить зелёный сигнал для второстепенной дороги.</p>
+                    <span class="arch-tech">⚡ Адаптивный алгоритм</span>
+                </div>
+            </div>
+            <div class="architecture-card">
+                <div class="arch-number">04</div>
+                <div class="arch-content">
+                    <h3>Автоматический возврат приоритета</h3>
+                    <p>После проезда автомобиля фиксируется его выход с перекрёстка (вторая плита), и система возвращает приоритет главной дороге. Весь цикл занимает 10–15 секунд.</p>
+                    <span class="arch-tech">🔄 Быстрая реакция</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats-section" id="stats">
+        <div class="section-header">
+            <h2 class="section-title">Экологический и экономический эффект</h2>
+            <p class="section-subtitle">Реальное воздействие системы на окружающую среду и бюджет водителей</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon">🌍</div><div class="stat-value" data-target="900">0</div><div class="stat-label">кг CO₂ в год</div><div class="stat-desc">Текущие выбросы с одного перекрёстка</div></div>
+            <div class="stat-card"><div class="stat-icon">♻️</div><div class="stat-value" data-target="700">0</div><div class="stat-label">кг CO₂ сэкономлено</div><div class="stat-desc">Предотвращённые выбросы ежегодно</div></div>
+            <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" data-target="80">0</div><div class="stat-label">% снижение простоев</div><div class="stat-desc">Реалистичный показатель системы</div></div>
+            <div class="stat-card"><div class="stat-icon">⛽</div><div class="stat-value" data-target="610">0</div><div class="stat-label">литров топлива в год</div><div class="stat-desc">Расход на холостом ходу</div></div>
+            <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" data-target="40000">0</div><div class="stat-label">рублей экономии</div><div class="stat-desc">Для 50 водителей в год</div></div>
+            <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-value" data-target="15">0</div><div class="stat-label">секунд</div><div class="stat-desc">Время полного цикла</div></div>
+        </div>
+    </section>
+
+    <section class="benefits-section" id="benefits">
+        <div class="section-header">
+            <h2 class="section-title">Экономия для водителей</h2>
+            <p class="section-subtitle">Нажмите на тип топлива, чтобы увидеть подробный расчёт</p>
+        </div>
+
+        <div class="fuel-grid">
+            <div class="fuel-card">
+                <div class="fuel-header" onclick="toggleFuel(this)"><div class="fuel-info"><h4>⛽ АИ-92</h4><p>Экономия топлива в год на одного водителя</p></div><div class="fuel-price">746 ₽</div><div class="fuel-toggle">▼</div></div>
+                <div class="fuel-details"><table class="calc-table"><tr><td>Расход на холостом ходу</td><td>1 л/час</td></tr><tr><td>Время простоя в день</td><td>2 мин × 50 авто = 100 мин</td></tr><tr><td>Расход в день на авто</td><td>1 × (2/60) = 0.033 л</td></tr><tr><td>Расход в год на авто</td><td>0.033 × 365 = 12.045 л</td></tr><tr><td>Цена топлива (дек. 2025)</td><td>61.96 ₽/л</td></tr><tr><td><strong>Экономия в год</strong></td><td><strong>12.045 × 61.96 ≈ 746 ₽</strong></td></tr></table><div class="calc-note">📊 При снижении простоев на 80% экономия может достигать ~600 ₽/год дополнительно</div></div>
+            </div>
+            <div class="fuel-card">
+                <div class="fuel-header" onclick="toggleFuel(this)"><div class="fuel-info"><h4>⛽ АИ-95</h4><p>Экономия топлива в год на одного водителя</p></div><div class="fuel-price">798 ₽</div><div class="fuel-toggle">▼</div></div>
+                <div class="fuel-details"><table class="calc-table"><tr><td>Расход на холостом ходу</td><td>1 л/час</td></tr><tr><td>Время простоя в день</td><td>2 мин × 50 авто = 100 мин</td></tr><tr><td>Расход в день на авто</td><td>1 × (2/60) = 0.033 л</td></tr><tr><td>Расход в год на авто</td><td>0.033 × 365 = 12.045 л</td></tr><tr><td>Цена топлива (дек. 2025)</td><td>66.27 ₽/л</td></tr><tr><td><strong>Экономия в год</strong></td><td><strong>12.045 × 66.27 ≈ 798 ₽</strong></td></tr></table><div class="calc-note">📊 При снижении простоев на 80% экономия может достигать ~640 ₽/год дополнительно</div></div>
+            </div>
+            <div class="fuel-card">
+                <div class="fuel-header" onclick="toggleFuel(this)"><div class="fuel-info"><h4>⛽ АИ-98</h4><p>Экономия топлива в год на одного водителя</p></div><div class="fuel-price">1 032 ₽</div><div class="fuel-toggle">▼</div></div>
+                <div class="fuel-details"><table class="calc-table"><tr><td>Расход на холостом ходу</td><td>1 л/час</td></tr><tr><td>Время простоя в день</td><td>2 мин × 50 авто = 100 мин</td></tr><tr><td>Расход в день на авто</td><td>1 × (2/60) = 0.033 л</td></tr><tr><td>Расход в год на авто</td><td>0.033 × 365 = 12.045 л</td></tr><tr><td>Цена топлива (дек. 2025)</td><td>85.71 ₽/л</td></tr><tr><td><strong>Экономия в год</strong></td><td><strong>12.045 × 85.71 ≈ 1 032 ₽</strong></td></tr></table><div class="calc-note">📊 При снижении простоев на 80% экономия может достигать ~825 ₽/год дополнительно</div></div>
+            </div>
+            <div class="fuel-card">
+                <div class="fuel-header" onclick="toggleFuel(this)"><div class="fuel-info"><h4>🚛 Дизель (ДТ)</h4><p>Экономия топлива в год на одного водителя</p></div><div class="fuel-price">909 ₽</div><div class="fuel-toggle">▼</div></div>
+                <div class="fuel-details"><table class="calc-table"><tr><td>Расход на холостом ходу</td><td>1 л/час</td></tr><tr><td>Время простоя в день</td><td>2 мин × 50 авто = 100 мин</td></tr><tr><td>Расход в день на авто</td><td>1 × (2/60) = 0.033 л</td></tr><tr><td>Расход в год на авто</td><td>0.033 × 365 = 12.045 л</td></tr><tr><td>Цена топлива (дек. 2025)</td><td>75.44 ₽/л</td></tr><tr><td><strong>Экономия в год</strong></td><td><strong>12.045 × 75.44 ≈ 909 ₽</strong></td></tr></table><div class="calc-note">📊 При снижении простоев на 80% экономия может достигать ~730 ₽/год дополнительно</div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="implementation" id="prototype">
+        <div class="section-header">
+            <h2 class="section-title">Визуальный прототип</h2>
+            <p class="section-subtitle">Масштабная модель перекрёстка в районе посёлка Сиверский</p>
+        </div>
+
+        <div class="implementation-content">
+            <p>На текущем этапе создан черновой макет перекрёстка в Blender. Он отражает типичную дорожную ситуацию — пересечение Киевской трассы и местной дороги.</p>
+            <ul class="implementation-list">
+                <li>Дорожное полотно с разметкой</li>
+                <li>Условные модели светофоров</li>
+                <li>Зоны установки сенсорных плит, обозначенные дорожными знаками</li>
+                <li>Надписи и маркеры, поясняющие размещение компонентов</li>
+                <li>Масштабная визуализация концепции</li>
+            </ul>
+            <div class="info-box">
+                <p><strong>Примечание:</strong> макет не содержит электронной начинки и не выполняет автоматическое управление. 
+                Он является визуальной демонстрацией концепции, позволяющей понять геометрию, масштаб и логику 
+                размещения элементов системы. Это первая версия, подготовленная для дальнейшей технической доработки.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">SmartTraffic System</div>
+            <div class="footer-info">
+                <p>Интеллектуальная система управления дорожным движением</p>
+                <p>Санкт-Петербургское государственное бюджетное профессиональное образовательное учреждение «Петровский колледж»</p>
+                <p>Отделение информационных технологий | Специальность 08.02.09</p>
+            </div>
+            <a href="mailto:l1rtuswork09@gmail.com" class="footer-contact">✉️ l1rtuswork09@gmail.com</a>
+            <div class="footer-bottom">
+                <p>© 2026 Белько Егор Александрович. Все права защищены.</p>
+                <p style="margin-top: 8px; font-size: 0.85rem;">Проект выполнен под руководством Герасимовой Е.А.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('load', () => setTimeout(() => document.querySelector('.loader').classList.add('hidden'), 500));
+
+        document.querySelectorAll('[data-scroll]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const offset = 80;
+                    const pos = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top: pos, behavior: 'smooth' });
+                }
+            });
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    if (entry.target.classList.contains('stat-card')) {
+                        const el = entry.target.querySelector('.stat-value');
+                        if (el && !el.classList.contains('animated')) { animateNumber(el); el.classList.add('animated'); }
+                    }
+                }
+            });
+        }, { threshold: 0.15, rootMargin: "0px 0px -80px 0px" });
+
+        document.querySelectorAll('.architecture-card, .stat-card, .fuel-card, .implementation-list li').forEach(el => observer.observe(el));
+
+        function animateNumber(element) {
+            const target = parseInt(element.getAttribute('data-target'));
+            const duration = 1800; const step = target / (duration / 16); let current = 0;
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) { element.textContent = target.toLocaleString('ru-RU'); clearInterval(timer); }
+                else { element.textContent = Math.floor(current).toLocaleString('ru-RU'); }
+            }, 16);
+        }
+
+        function toggleFuel(header) {
+            const card = header.parentElement;
+            const wasActive = card.classList.contains('active');
+            document.querySelectorAll('.fuel-card').forEach(c => c.classList.remove('active'));
+            if (!wasActive) card.classList.add('active');
+        }
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 100) { nav.style.background = 'rgba(10, 10, 10, 0.98)'; nav.style.boxShadow = '0 5px 30px rgba(0,0,0,0.3)'; }
+            else { nav.style.background = 'rgba(10, 10, 10, 0.95)'; nav.style.boxShadow = 'none'; }
+        });
+    </script>
+</body>
+</html>
