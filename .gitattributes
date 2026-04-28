@@ -1,5 +1,5 @@
 *.glb binary
 *.gltf binary
-*.html text
-*.css text
-*.js text
+*.html text charset=utf-8
+*.css text charset=utf-8
+*.js text charset=utf-8
