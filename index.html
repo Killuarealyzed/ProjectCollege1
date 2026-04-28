@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>l1rtus Company | Система умных светофоров</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -329,14 +336,8 @@
         </div>
         <div class="model-container reveal" style="transition-delay: 0.15s;">
             <div class="model-viewer-wrap">
-                <!-- 3D Model -->
-                <model-viewer 
-                    src="traffic-light.glb" 
-                    alt="3D модель перекрёстка"
-                    auto-rotate 
-                    camera-controls 
-                    id="trafficModel">
-                </model-viewer>
+                <!-- Контейнер для Three.js сцены -->
+                <div id="threejs-container" style="width: 100%; height: 100%;"></div>
                 
                 <!-- Запасной вариант - заглушка -->
                 <div class="model-image-fallback" id="modelFallback">
@@ -596,6 +597,125 @@
                 }
             }, 5000);
         }
+
+        // Инициализация Three.js сцены с программной моделью светофора
+        import { createTrafficLight, setTrafficLightState } from './traffic-light-model.js';
+
+        function initThreeJSScene() {
+            const container = document.getElementById('threejs-container');
+            if (!container) return;
+
+            // Скрываем заглушку
+            const fallback = document.getElementById('modelFallback');
+            if (fallback) fallback.classList.add('hidden');
+
+            // Создаем сцену
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+
+            // Камера
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(3, 2, 5);
+            camera.lookAt(0, -1, 0);
+
+            // Рендерер
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Освещение
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 0.5);
+            pointLight.position.set(-2, 3, 2);
+            scene.add(pointLight);
+
+            // Создаем светофор
+            const trafficLight = createTrafficLight();
+            scene.add(trafficLight);
+
+            // Управление камерой (простая версия)
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            let spherical = { radius: 6, theta: Math.PI / 4, phi: Math.PI / 3 };
+
+            function updateCamera() {
+                camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+                camera.position.y = spherical.radius * Math.cos(spherical.phi);
+                camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+                camera.lookAt(0, -1, 0);
+            }
+
+            container.addEventListener('mousedown', (e) => { isDragging = true; });
+            container.addEventListener('mouseup', () => { isDragging = false; });
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+                spherical.theta -= deltaX * 0.01;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + deltaY * 0.01));
+                updateCamera();
+            });
+            container.addEventListener('wheel', (e) => {
+                spherical.radius = Math.max(3, Math.min(15, spherical.radius + e.deltaY * 0.01));
+                updateCamera();
+            });
+
+            // Анимация светофора
+            let currentState = 'red';
+            let stateTimeout;
+
+            function cycleLights() {
+                setTrafficLightState(trafficLight, currentState);
+                
+                let nextDelay;
+                if (currentState === 'red') {
+                    nextDelay = 3000;
+                    currentState = 'green';
+                } else if (currentState === 'green') {
+                    nextDelay = 3000;
+                    currentState = 'yellow';
+                } else {
+                    nextDelay = 1000;
+                    currentState = 'red';
+                }
+
+                stateTimeout = setTimeout(cycleLights, nextDelay);
+            }
+
+            cycleLights();
+
+            // Адаптация под размер окна
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            // Рендер цикл
+            function animate() {
+                requestAnimationFrame(animate);
+                trafficLight.rotation.y += 0.002;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            return { scene, camera, renderer, trafficLight };
+        }
+
+        // Запускаем после загрузки страницы
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                initThreeJSScene();
+            }, 800);
+        });
     </script>
 </body>
 </html>
