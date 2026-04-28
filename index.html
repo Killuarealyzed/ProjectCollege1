@@ -136,8 +136,45 @@
         .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
 
         .model-container { max-width: 1400px; margin: 0 auto; background: var(--card); border-radius: 28px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 50px 100px rgba(0,0,0,0.5); }
-        .model-viewer-wrap { width: 100%; height: 60vh; min-height: 420px; }
+        .model-viewer-wrap { width: 100%; height: 60vh; min-height: 420px; position: relative; background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%); }
         model-viewer { width: 100%; height: 100%; }
+        
+        /* Fallback для 3D модели */
+        .model-fallback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+        .model-fallback.show { display: flex; }
+        .model-fallback-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .model-fallback h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+        .model-fallback p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            max-width: 400px;
+        }
+        .model-fallback .btn {
+            margin: 8px;
+        }
+        
         .model-features { padding: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 28px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); }
         .model-feature { display: flex; align-items: flex-start; gap: 14px; }
         .model-feature-icon { width: 44px; height: 44px; min-width: 44px; background: rgba(16,185,129,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
@@ -309,9 +346,19 @@
                     exposure="1.2"
                     tone-mapping="neutral"
                     environment-image="neutral"
-                    id="trafficModel"
-                    style="background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);">
+                    id="trafficModel">
                 </model-viewer>
+                
+                <!-- Fallback если модель не загрузится -->
+                <div class="model-fallback" id="modelFallback">
+                    <div class="model-fallback-icon">🚦</div>
+                    <h3>3D модель не загрузилась</h3>
+                    <p>Проверьте, что файл traffic-light.glb загружен в репозиторий GitHub</p>
+                    <div>
+                        <button class="btn btn-primary" onclick="retryModelLoad()">Попробовать снова</button>
+                        <a href="#prototype" class="btn btn-secondary" data-scroll>Смотреть описание</a>
+                    </div>
+                </div>
             </div>
             <div class="model-features">
                 <div class="model-feature"><div class="model-feature-icon">🚦</div><div><h4>Адаптивные светофоры</h4><p>Динамическое изменение фаз в зависимости от трафика</p></div></div>
@@ -528,15 +575,47 @@
             if (!wasActive) card.classList.add('active');
         }
 
-        // Проверка загрузки 3D модели
+        // ===== ИСПРАВЛЕНИЕ 3D МОДЕЛИ =====
         const model = document.getElementById('trafficModel');
+        const fallback = document.getElementById('modelFallback');
+        let modelLoaded = false;
+
         if (model) {
-            model.addEventListener('error', () => {
-                console.error('❌ Ошибка загрузки 3D модели!');
-            });
+            // Событие успешной загрузки
             model.addEventListener('load', () => {
-                console.log('✅ 3D модель загружена успешно!');
+                console.log('✅ 3D модель загружена успешно');
+                modelLoaded = true;
             });
+            
+            // Событие ошибки
+            model.addEventListener('error', (e) => {
+                console.error('❌ Ошибка загрузки 3D модели:', e);
+                if (fallback) fallback.classList.add('show');
+            });
+            
+            // Таймаут - если модель не загрузилась за 10 секунд
+            setTimeout(() => {
+                if (!modelLoaded && fallback) {
+                    console.warn('⚠️ Модель не загрузилась за 10 секунд, показываем fallback');
+                    fallback.classList.add('show');
+                }
+            }, 10000);
+        }
+
+        // Функция повторной загрузки
+        function retryModelLoad() {
+            if (model && fallback) {
+                fallback.classList.remove('show');
+                // Добавляем timestamp чтобы браузер не брал из кэша
+                model.src = './traffic-light.glb?_=' + Date.now();
+                
+                // Снова проверяем через 5 секунд
+                setTimeout(() => {
+                    if (!modelLoaded) {
+                        fallback.classList.add('show');
+                    }
+                }, 5000);
+            }
         }
     </script>
 </body>
