@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>l1rtus Company | Система умных светофоров</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,7 +13,7 @@
             --card: #141414;
             --border: rgba(255,255,255,0.06);
             --text: #ffffff;
-            --text-muted: #777777;
+            --text-muted: #909090;
             --accent: #10b981;
             --accent2: #06b6d4;
             --gradient: linear-gradient(135deg, #10b981, #06b6d4);
@@ -30,9 +29,9 @@
             line-height: 1.6;
         }
 
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
         .loader {
@@ -135,38 +134,21 @@
         .btn-secondary { background: rgba(255,255,255,0.04); color: var(--text); border: 1px solid var(--border); }
         .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
 
+        /* MODEL SECTION (IMAGE ONLY) */
         .model-container { max-width: 1400px; margin: 0 auto; background: var(--card); border-radius: 28px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 50px 100px rgba(0,0,0,0.5); }
-        .model-viewer-wrap { width: 100%; height: 60vh; min-height: 420px; position: relative; }
-        model-viewer { width: 100%; height: 100%; display: none; }
-        model-viewer.loaded { display: block; }
-        
-        /* Запасной вариант - изображение */
-        .model-image-fallback {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .model-image-wrap { 
+            width: 100%; height: 60vh; min-height: 420px; position: relative; 
             background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
-            position: absolute;
-            top: 0;
-            left: 0;
+            overflow: hidden;
         }
-        .model-image-fallback.hidden { display: none; }
-        .model-image-fallback img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+        .model-image-wrap img {
+            width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;
         }
-        .model-placeholder {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-        .model-placeholder-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
+        .model-container:hover .model-image-wrap img { transform: scale(1.03); }
+        .model-fallback {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-muted); text-align: center; padding: 40px;
         }
         
         .model-features { padding: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 28px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); }
@@ -230,6 +212,7 @@
         .footer-contact:hover { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
         .footer-bottom { margin-top: 40px; padding-top: 25px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.82rem; }
 
+        /* ANIMATIONS */
         .reveal { opacity: 0; transform: translateY(50px); transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1); }
         .reveal.from-left { transform: translateX(-60px); }
         .reveal.from-right { transform: translateX(60px); }
@@ -266,7 +249,7 @@
             .btn { width: 100%; text-align: center; }
             .step-card { grid-template-columns: 1fr; text-align: center; }
             .step-num { font-size: 2rem; }
-            .model-viewer-wrap { height: 50vh; min-height: 300px; }
+            .model-image-wrap { height: 50vh; min-height: 300px; }
             .model-features { padding: 25px 20px; }
             .prototype-content { padding: 30px 20px; }
             .fuel-header { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -290,7 +273,7 @@
         </button>
         <ul class="nav-links">
             <li><a href="#about" data-scroll>О системе</a></li>
-            <li><a href="#model" data-scroll>3D Модель</a></li>
+            <li><a href="#model" data-scroll>Макет</a></li>
             <li><a href="#how" data-scroll>Принцип работы</a></li>
             <li><a href="#stats" data-scroll>Эффект</a></li>
             <li><a href="#benefits" data-scroll>Экономия</a></li>
@@ -316,7 +299,7 @@
                 <div class="hero-meta-item"><div class="label">Руководитель</div><div class="value">Герасимова Е.А.</div></div>
             </div>
             <div class="hero-buttons hero-reveal" style="transition-delay: 0.45s;">
-                <a href="#model" class="btn btn-primary" data-scroll>Смотреть 3D модель</a>
+                <a href="#model" class="btn btn-primary" data-scroll>Смотреть макет</a>
                 <a href="#how" class="btn btn-secondary" data-scroll>Как это работает</a>
             </div>
         </div>
@@ -324,31 +307,17 @@
 
     <section class="section-model" id="model">
         <div class="section-header reveal">
-            <h2>3D Модель <span>перекрёстка</span></h2>
+            <h2>Визуализация <span>макета</span></h2>
             <p>Интерактивная визуализация макета пересечения Киевской трассы и местной дороги</p>
         </div>
         <div class="model-container reveal" style="transition-delay: 0.15s;">
-            <div class="model-viewer-wrap">
-                <!-- 3D Model -->
-                <model-viewer 
-                    src="traffic-light.glb" 
-                    alt="3D модель перекрёстка"
-                    auto-rotate 
-                    camera-controls 
-                    id="trafficModel">
-                </model-viewer>
-                
-                <!-- Запасной вариант - заглушка -->
-                <div class="model-image-fallback" id="modelFallback">
-                    <div class="model-placeholder">
-                        <div class="model-placeholder-icon">🚦</div>
-                        <h3>3D модель перекрёстка</h3>
-                        <p>Макет пересечения Киевской трассы и местной дороги<br>в районе посёлка Сиверский</p>
-                        <p style="margin-top: 20px; font-size: 0.9rem;">
-                            <strong>Примечание:</strong> 3D модель загружается.<br>
-                            Если не появилась — проверьте подключение к интернету.
-                        </p>
-                    </div>
+            <div class="model-image-wrap">
+                <!-- Просто положи файл model.jpg рядом с index.html -->
+                <img src="model.jpg" alt="3D Модель перекрёстка" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="model-fallback" style="display:none;">
+                    <div class="model-fallback-icon">🚦</div>
+                    <h3>Макет перекрёстка</h3>
+                    <p>Визуализация концепции адаптивного управления<br>в районе посёлка Сиверский</p>
                 </div>
             </div>
             <div class="model-features">
@@ -564,37 +533,6 @@
             const wasActive = card.classList.contains('active');
             document.querySelectorAll('.fuel-card').forEach(c => c.classList.remove('active'));
             if (!wasActive) card.classList.add('active');
-        }
-
-        // ===== ОБРАБОТКА 3D МОДЕЛИ =====
-        const model = document.getElementById('trafficModel');
-        const fallback = document.getElementById('modelFallback');
-        
-        if (model) {
-            // Когда модель загрузится
-            model.addEventListener('load', () => {
-                console.log('✅ Модель загружена');
-                model.classList.add('loaded');
-                if (fallback) fallback.classList.add('hidden');
-            });
-            
-            // Если ошибка загрузки
-            model.addEventListener('error', () => {
-                console.log('❌ Ошибка загрузки модели, показываем заглушку');
-                if (fallback) {
-                    fallback.classList.remove('hidden');
-                    fallback.querySelector('h3').textContent = '3D модель недоступна';
-                    fallback.querySelector('p').textContent = 'Файл модели не найден или не загрузился';
-                }
-            });
-            
-            // Если через 5 секунд модель не загрузилась - показываем заглушку
-            setTimeout(() => {
-                if (!model.classList.contains('loaded') && fallback) {
-                    console.log('⏱ Таймаут загрузки модели');
-                    fallback.classList.remove('hidden');
-                }
-            }, 5000);
         }
     </script>
 </body>
